@@ -38,9 +38,6 @@
 
 
 
-
-
-
 pipeline {
     agent any
 
@@ -56,38 +53,37 @@ pipeline {
             steps {
                 echo "Branch: ${env.GIT_BRANCH}"
                 echo "Commit: ${env.GIT_COMMIT}"
-                echo 'Code Jenkins ne GitHub se pull kar liya'
             }
         }
 
         stage('Build') {
             steps {
-                echo '=== npm install chal raha hai Jenkins pe ==='
                 sh 'npm install'
-                echo '=== Build complete ==='
+                echo 'Build complete'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Tests abhi nahi hain — aage add karenge'
+                echo 'No tests yet'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo '=== EC2 pe deploy ho raha hai ==='
+                echo '=== Deploying to EC2 ==='
                 sshagent(['ec2-ssh-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} '
                             cd ${APP_DIR} &&
                             git pull origin main &&
                             npm install &&
-                            pm2 restart my-app
+                            pm2 restart my-app &&
+                            sudo systemctl reload nginx
                         '
                     """
                 }
-                echo '=== Deploy complete! ==='
+                echo "=== Live at http://${EC2_IP} ==="
             }
         }
 
@@ -95,10 +91,10 @@ pipeline {
 
     post {
         success {
-            echo "SUCCESS! App deploy ho gaya: http://${EC2_IP}:3000"
+            echo "SUCCESS! http://${EC2_IP}/check"
         }
         failure {
-            echo 'FAILED! Console output check karo upar'
+            echo 'FAILED! Check console output above.'
         }
     }
 }
