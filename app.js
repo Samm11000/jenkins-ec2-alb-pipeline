@@ -9,11 +9,10 @@ app.get('/', (req, res) => {
 app.get('/check', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'App is running fine!',
+    message: 'Jenkinsfile pipeline is working!', 
     timestamp: new Date()
   });
 });
-
 app.listen(PORT, () => {
   console.log(`Server chal raha hai port ${PORT} pe`);
 });
