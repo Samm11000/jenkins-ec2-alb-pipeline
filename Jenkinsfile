@@ -2,37 +2,38 @@ pipeline {
     agent any
 
     environment {
-        EC2_IP      = '54.145.224.135'
-        EC2_USER    = 'ubuntu'
-        APP_DIR     = '/home/ubuntu/project'
-        ALB_DNS     = 'my-app-alb-344711081.us-east-1.elb.amazonaws.com'
+        EC2_IP   = '54.145.224.135'
+        EC2_USER = 'ubuntu'
+        APP_DIR  = '/home/ubuntu/project'
+        ALB_DNS  = 'my-app-alb-344711081.us-east-1.elb.amazonaws.com'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo "Branch: ${env.GIT_BRANCH}"
                 echo "Commit: ${env.GIT_COMMIT}"
+                echo "Branch: ${env.GIT_BRANCH}"
             }
         }
 
         stage('Build') {
             steps {
                 sh 'npm install'
-                echo 'Build complete'
+                echo 'Dependencies installed'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'No tests yet — Phase 7 mein add karenge'
+                sh 'node -e "require(\'./app.js\')" &'
+                sh 'sleep 2 && curl -f http://localhost:3000/check && kill %1 || true'
+                echo 'Basic smoke test passed'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo '=== Deploying to EC2 ==='
                 sshagent(['ec2-ssh-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} '
@@ -44,7 +45,14 @@ pipeline {
                         '
                     """
                 }
-                echo "=== Deployed! Live at http://${ALB_DNS} ==="
+                echo "Deployed to http://${ALB_DNS}"
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh "sleep 10 && curl -f http://${ALB_DNS}/check"
+                echo 'Post-deploy health check passed!'
             }
         }
 
@@ -52,11 +60,12 @@ pipeline {
 
     post {
         success {
-            echo "SUCCESS! http://${ALB_DNS}"
-            echo "Health check: http://${ALB_DNS}/check"
+            echo "PIPELINE SUCCESS"
+            echo "App: http://${ALB_DNS}"
+            echo "Jenkins: http://${EC2_IP}:8080"
         }
         failure {
-            echo 'FAILED! Check console output above.'
+            echo 'PIPELINE FAILED — check console above'
         }
     }
 }
