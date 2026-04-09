@@ -356,7 +356,7 @@ This project covers the **core DevOps lifecycle** end to end:
 
 **Samm11000** — [@Samm11000](https://github.com/Samm11000)
 
----
+--
 
 <div align="center">
 <sub>Built with ☕ and a lot of SSH sessions</sub>
